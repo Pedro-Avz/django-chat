@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="https://biotronica.b-cdn.net/form-wired/logo_v1.png">
+    <title>Valley Chat</title>
+
+</head>
+<style>
+    * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: url('https://biotronica.b-cdn.net/form-wired/valley_temp.jpeg') no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(75deg, rgb(20, 23, 33) 0%, rgb(20, 23, 33) 50%, rgba(20, 23, 33, 0.8) 100%);
+  z-index: 1;
+}
+
+.page-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 65%; 
+  height: 60%;
+  z-index: 2;
+  margin-left: 2rem; 
+}
+
+.sidebar {
+  height: 100%;
+  width: 25%;
+  max-width: 250px;
+  background-color: rgba(30, 30, 40, 0.0);
+  opacity: 0.5;
+  padding: 1rem;
+  border-radius: 1rem 0 0 1rem;
+  box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+}
+
+.room {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #23252e;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  transition: background-color 0.25s ease;
+  cursor: pointer;
+}
+
+.room:hover {
+  background-color: #fa541c;
+}
+
+.content {
+  height: 100%;
+  width: 75%;
+  max-width: 600px;
+  padding: 2rem;
+  background-color: rgba(30, 30, 40, 0.2);
+  border-radius: 0 1rem 1rem 0;
+  box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+  color: #ffffff;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.chats-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chats-container::-webkit-scrollbar {
+  display: none;
+}
+
+.single-message {
+  width: fit-content;
+  max-width: 60%;
+  clear: both;
+}
+
+.msg-body {
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  background-color: #23252e;
+  color: #ffffff;
+  font-size: 1rem;
+  border-radius: 1rem;
+  word-wrap: break-word;
+}
+
+.sent {
+  float: right;
+}
+
+.sent>.msg-body {
+  background-color: rgb(250, 84, 28)
+;
+}
+
+.sender {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center; 
+}
+
+textarea {
+  height: 2rem;
+  max-height: 5rem;
+  resize: none;
+  outline: none;
+  border: 2px solid #fa541c;
+  padding: 0.5rem 1rem;
+  background-color: #333;
+  color: #fff;
+  border-radius: 1rem;
+  width: 100%;
+  box-shadow: 0 0 8px rgba(204, 81, 43, 0.7);
+  overflow: hidden;
+  text-align: left;
+  box-sizing: border-box;
+  
+}
+
+textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: #fa541c;
+  border-radius: 4px;
+}
+
+textarea::placeholder {
+  color: #b0b0b0;
+  text-align: left;
+}
+
+button {
+  border: 0;
+  outline: 0;
+  padding: 0.5rem 1rem;
+  background-color: #fa541c;
+  border-radius: 1rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: 0.25s ease;
+  cursor: pointer;
+  height: 2rem; 
+  box-sizing: border-box; 
+}
+
+button:hover {
+  background-color: #ce3203;
+}
+
+</style>
+<body>
+    <div class="overlay"></div>
+    <div class="page-container">
+        <div class="sidebar">
+            <div class="room">São Paulo FC</div>
+            <div class="room">LOL</div>
+            <div class="room">Valorant</div>
+        </div>
+        <div class="content">
+            <h1>Welcome to {{ room_name }}</h1>
+            <div class="chats-container" id="chats-container">
+              {%for message in messages%}
+              {% if message.sender.lower == user.lower %}
+                <div class="single-message sent">
+                  <div class="msg-body">{{message.message}}</div>
+                    <p class="sender">Me</p>
+                </div>
+              {% else %}
+                <div class="single-message">
+                  <div class="msg-body">{{message.message}}</div>
+                  <p class="sender">{{message.sender}}</p>
+                </div>
+              {% endif %}
+              {%endfor%}
+            </div>
+            <form action="" id="msg-form" method="post">
+                <textarea name="message" id="message" cols="30" rows="1" placeholder="Write a message"></textarea>
+                <button type="submit">&#10003;</button>
+            </form>
+        </div>
+    </div>
+      
+  <script>
+    document.getElementById('message').addEventListener('input', function () {
+    this.style.height = 'auto';  
+    this.style.height = this.scrollHeight + 'px';  
+    if (this.scrollHeight > parseInt(getComputedStyle(this).maxHeight)) {
+        this.style.overflowY = 'scroll';  
+    } else {
+        this.style.overflowY = 'hidden';  
+    }
+    });
+  </script>
+</body>
+
+</html>

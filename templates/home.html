@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="https://biotronica.b-cdn.net/form-wired/logo_v1.png">
+    <title>Welcome to Valley</title>
+</head>
+
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: url('https://biotronica.b-cdn.net/form-wired/valley_temp.jpeg') no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(75deg, rgb(20, 23, 33) 0%, rgb(20, 23, 33) 50%, rgba(20, 23, 33, 0.8) 100%);
+    z-index: 1;
+}
+
+.container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding-left: 20%; 
+    padding-bottom: 10%; 
+    z-index: 2;
+}
+
+.welcome-box {
+    padding: 30px 40px;
+    border-radius: 10px;
+    padding-top: 200px;
+    text-align: center;
+    color: #fff;
+    backdrop-filter: blur(10px);
+    max-width: 500px; 
+}
+
+.welcome-box .emoji {
+    font-size: 1.5em;
+}
+
+.welcome-box h1 {
+    font-size: 2.5em;
+    margin-bottom: 12px;
+}
+
+.welcome-box p {
+    margin-bottom: 24px; 
+    font-size: 1.2em;
+    color: #ccc;
+}
+
+.username-input, .room-input, .your-room-input {
+    width: calc(100% - 36px);
+    padding: 12px 18px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: smaller;
+    background-color: #3e404b;
+    color: #fff;
+}
+
+.enter-button {
+    width: calc(100% - 36px);
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #fa541c; 
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.44s ease;
+}
+
+.enter-button:hover {
+    filter: brightness(50%); 
+}
+
+.room-options {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    max-width: 300px;
+}
+
+.room-options button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #fa541c;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.room-options button:hover {
+    filter: brightness(50%);
+}
+
+.password-input, .confirm-button {
+    display: none;
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: smaller;
+    background-color: #3e404b;
+    color: #fff;
+}
+</style>
+<body>
+    <div class="overlay">
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="container">
+            <div class="welcome-box">
+                <h1>Welcome <span class="emoji">👋</span></h1>
+                <p>Set a username and room to get started</p>
+                <input type="text" class="username-input" placeholder="Username" required name="username">
+                <input type="text" class="room-input" placeholder="Room" name="room">
+                <p>Or create your room</p>
+                <input type="text" class="your-room-input" placeholder="Your room">
+                <button type="submit" class="enter-button">Enter</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="room-options">
+        <p>Choose the room type:</p>
+        <button class="public-room">Public</button>
+        <button class="private-room">Private</button>
+        <input type="password" class="password-input" placeholder="Enter room password">
+        <button class="confirm-button">Confirm</button>
+    </div>
+</div> 
+    <script>
+        const usernameInput = document.querySelector('.username-input');
+        const yourRoomInput = document.querySelector('.your-room-input');
+        const enterButton = document.querySelector('.enter-button');
+        const roomOptions = document.querySelector('.room-options');
+        const publicRoomButton = document.querySelector('.public-room');
+        const privateRoomButton = document.querySelector('.private-room');
+        const passwordInput = document.querySelector('.password-input');
+        const confirmButton = document.querySelector('.confirm-button');
+
+        enterButton.addEventListener('click', function() {
+            if (usernameInput.value.trim() === '') {
+                alert('Please enter a username.');
+                return;
+            }
+            if (yourRoomInput.value.trim() !== '') {
+                roomOptions.style.display = 'flex';
+            } else {
+                
+            }
+        });
+
+      
+        privateRoomButton.addEventListener('click', function() {
+            passwordInput.style.display = 'block';
+            confirmButton.style.display = 'block';
+        });
+ 
+        document.addEventListener('click', function(event) {
+            if (!roomOptions.contains(event.target) && !enterButton.contains(event.target)) {
+                roomOptions.style.display = 'none';
+                passwordInput.style.display = 'none';
+                confirmButton.style.display = 'none';
+            }
+        });
+
+       
+        confirmButton.addEventListener('click', function() {
+            const isPrivate = passwordInput.style.display === 'block';
+            if (isPrivate && !passwordInput.value.trim()) {
+                alert('Please enter a password for the private room.');
+            } else {
+                roomOptions.style.display = 'none';
+                alert(`Room created as ${isPrivate ? 'Private' : 'Public'}${isPrivate ? ' with a password' : ''}.`);
+            }
+        });
+
+       
+        publicRoomButton.addEventListener('click', function() {
+            passwordInput.style.display = 'none';
+            confirmButton.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
