@@ -57,6 +57,12 @@ body {
   border-radius: 1rem 0 0 1rem;
   box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
+  text-decoration: none;
+  color: inherit;
+}
+.sidebar a {
+  text-decoration: none; 
+    color: inherit;
 }
 
 .room {
@@ -87,7 +93,7 @@ body {
   color: #ffffff;
 }
 
-h1 {
+.content h1 {
   text-align: center;
   font-size: 2rem;
   margin-bottom: 1rem;
@@ -192,15 +198,32 @@ button:hover {
   background-color: #ce3203;
 }
 
+.sidebar h1 {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
+               0 0 20px rgba(255, 255, 255, 0.6),
+               0 0 30px rgba(255, 255, 255, 0.4),
+               0 0 40px rgba(255, 255, 255, 0.2);
+  
+}
+
 </style>
 <body>
     <div class="overlay"></div>
     <div class="page-container">
-        <div class="sidebar">
-            <div class="room">São Paulo FC</div>
-            <div class="room">LOL</div>
-            <div class="room">Valorant</div>
-        </div>
+      <div class="sidebar">
+        <h1>Public Rooms</h1>
+        {% for room in rooms %}
+            {% if room.room_name != room_name %} 
+                <a href="{% url 'room' room_name=room.room_name username=user %}">
+                    <div class="room">{{ room.room_name }}</div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
         <div class="content">
             <h1>Welcome to {{ room_name }}</h1>
             <div class="chats-container" id="chats-container">
@@ -235,6 +258,61 @@ button:hover {
         this.style.overflowY = 'hidden';  
     }
     });
+
+    //conectar ao websocket
+    const socketURL = `ws://${window.location.host}/ws/messages/{{room_name}}/`;
+    //console.log("conectando ao websocket...")
+    const socket = new WebSocket(socketURL)
+
+    //enviar para o back
+    const message_form = document.getElementById("msg-form")
+    message_form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      let message_sent = document.getElementById("message").value;
+      //console.log("enviando mensangem... ", message_sent);
+      socket.send(
+        JSON.stringify({
+          message: message_sent,
+          room_name: "{{room_name}}",
+          sender: "{{user}}",
+        })
+      );
+    });
+
+    //fazer o chat ir descendo
+    const chats_div = document.getElementById("chats-container")
+    const scrollToBottom = () => {
+      chats_div.scrollTop = chats_div.scrollHeight;
+    }
+
+    //receber as messagens do back
+    socket.addEventListener("message", (e) => {
+      const data = JSON.parse(e.data)["message"]
+      //console.log(data);
+
+      let sender = data["sender"]
+      let content = data["message"]
+
+      if (sender == "{{user}}") {
+        document.getElementById("message").value = ""
+      }
+
+      if (sender == "{{user}}") {
+        chats_div.innerHTML += `<div class="single-message sent">
+          <div class="msg-body">${content}</div>
+          <p class="sender">Me</p>
+        </div>`;
+      } else {
+        chats_div.innerHTML += `<div class="single-message">
+          <div class="msg-body">${content}</div>
+          <p class="sender">${sender}</p>
+        </div>`;
+      }
+
+      scrollToBottom();
+
+    });
+
   </script>
 </body>
 

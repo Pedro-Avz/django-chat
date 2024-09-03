@@ -15,16 +15,18 @@ def HomeView(request):
         except Room.DoesNotExist:
             new_room = Room.objects.create(room_name=room)
         return redirect("room", room_name=room, username=username)
-    return render(request,  "home.html")
+    rooms = Room.objects.filter(status=False)
+    return render(request,  "home.html", {"rooms": rooms})
 
 def RoomView(request, room_name, username):
 
     have_room = Room.objects.get(room_name__icontains=room_name)
     get_messages = Message.objects.filter(room=have_room)
+    public_rooms  = Room.objects.filter(status=False)
     context = {
         "messages": get_messages,
         "user": username,
-        "room_name" : have_room.room_name
-
+        "room_name" : have_room.room_name,
+        "rooms": public_rooms 
     }
     return render(request,  "room.html", context)
