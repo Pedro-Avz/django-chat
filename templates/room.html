@@ -47,22 +47,38 @@ body {
   margin-left: 2rem; 
 }
 
+
 .sidebar {
-  height: 100%;
-  width: 25%;
-  max-width: 250px;
-  background-color: rgba(30, 30, 40, 0.0);
-  opacity: 0.5;
-  padding: 1rem;
-  border-radius: 1rem 0 0 1rem;
-  box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
-  overflow-y: auto;
-  text-decoration: none;
-  color: inherit;
+    height: 100%;
+    width: 25%;
+    max-width: 250px;
+    background-color: rgba(30, 30, 40, 0.0);
+    opacity: 0.5;
+    padding: 1rem;
+    border-radius: 1rem 0 0 1rem;
+    box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    scrollbar-width: thin; 
+    scrollbar-color: #fa541c rgba(30, 30, 40, 0.2); 
+    overflow-y: auto; 
 }
+
+
 .sidebar a {
   text-decoration: none; 
     color: inherit;
+}
+
+.rooms-container {
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  
+}
+.room .lock-icon {
+    margin-left: auto;
+    color: #fa541c;
 }
 
 .room {
@@ -73,6 +89,9 @@ body {
   margin-bottom: 1rem;
   transition: background-color 0.25s ease;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .room:hover {
@@ -209,44 +228,143 @@ button:hover {
                0 0 40px rgba(255, 255, 255, 0.2);
   
 }
+.password-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 3;
+    }
+
+    .password-content {
+        background-color: rgb(14, 15, 19, 0.4);
+        padding: 2rem;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        text-align: center;
+        box-shadow: 0px 0px 1rem 0px rgba(0, 0, 0, 0.2);
+    }
+
+    .password-content input {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        border-radius: 0.5rem;
+        border: 2px solid #fa541c;
+        width: 100%;
+    }
+
+    .password-content button {
+        padding: 0.5rem 1rem;
+        background-color: #fa541c;
+        border: none;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    .password-content button:hover {
+        background-color: #ce3203;
+    }
+    .user-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: rgba(30, 30, 40, 0.2);
+    border-radius: 0.5rem;
+    position: sticky;
+    bottom: 0;
+}
+
+.user-bar p {
+    margin: 0;
+    color: #ffffff;
+}
+
+.user-bar button {
+    border: 0;
+    outline: 0;
+    padding: 0.5rem 1rem;
+    background-color: #fa541c;
+    border-radius: 0.5rem;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: 0.25s ease;
+    cursor: pointer;
+}
+
+  .user-bar button:hover {
+      background-color: #ce3203;
+  }
 
 </style>
 <body>
-    <div class="overlay"></div>
-    <div class="page-container">
-      <div class="sidebar">
-        <h1>Public Rooms</h1>
-        {% for room in rooms %}
-            {% if room.room_name != room_name %} 
-                <a href="{% url 'room' room_name=room.room_name username=user %}">
-                    <div class="room">{{ room.room_name }}</div>
-                </a>
-            {% endif %}
-        {% endfor %}
-    </div>
-        <div class="content">
-            <h1>Welcome to {{ room_name }}</h1>
-            <div class="chats-container" id="chats-container">
-              {%for message in messages%}
-              {% if message.sender.lower == user.lower %}
-                <div class="single-message sent">
-                  <div class="msg-body">{{message.message}}</div>
-                    <p class="sender">Me</p>
-                </div>
-              {% else %}
-                <div class="single-message">
-                  <div class="msg-body">{{message.message}}</div>
-                  <p class="sender">{{message.sender}}</p>
-                </div>
+  <div class="overlay"></div>
+  {% if room_status %}
+  <div id="password-modal" class="password-modal">
+      <div class="password-content">
+          <h2>Room Password</h2>
+          <form method="post" action="{% url 'room' room_name=room_name username=user %}">
+              {% csrf_token %}
+              <input type="password" name="room_password" placeholder="Enter password">
+              <button type="submit">Submit</button>
+          </form>
+      </div>
+  </div>
+  {% endif %}
+  <div class="page-container">
+    <div class="sidebar">
+      <h1>Rooms</h1>
+      <div class="rooms-container">
+          {% for room in rooms %}
+              {% if room.room_name != room_name %} 
+                  <a href="{% url 'room' room_name=room.room_name username=user %}">
+                      <div class="room">
+                          {{ room.room_name }}
+                          {% if room.status %}
+                          <span class="lock-icon">&#128274;</span>
+                          {% endif %}
+                      </div>
+                  </a>
               {% endif %}
-              {%endfor%}
-            </div>
-            <form action="" id="msg-form" method="post">
-                <textarea name="message" id="message" cols="30" rows="1" placeholder="Write a message"></textarea>
-                <button type="submit">&#10003;</button>
-            </form>
-        </div>
-    </div>
+          {% endfor %}
+      </div>
+      <div class="user-bar">
+          <p>{{ user }}</p>
+          <a href="/" > <button type="submit">Logout</button></a>
+      </div>
+  </div>
+      <div class="content">
+          <h1>Welcome to {{ room_name }}</h1>
+          <div class="chats-container" id="chats-container">
+            {% for message in messages %}
+            {% if message.sender|lower == user|lower %}
+              <div class="single-message sent">
+                <div class="msg-body">{{ message.message }}</div>
+                  <p class="sender">Me</p>
+              </div>
+            {% else %}
+              <div class="single-message">
+                <div class="msg-body">{{ message.message }}</div>
+                <p class="sender">{{ message.sender }}</p>
+              </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          <form action="" id="msg-form" method="post">
+              {% csrf_token %}
+              <textarea name="message" id="message" cols="30" rows="1" placeholder="Write a message"></textarea>
+              <button type="submit">&#10003;</button>
+          </form>
+      </div>
+  </div>
+</body>
       
   <script>
     document.getElementById('message').addEventListener('input', function () {
@@ -257,6 +375,13 @@ button:hover {
     } else {
         this.style.overflowY = 'hidden';  
     }
+    });
+
+    document.getElementById("message").addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        message_form.dispatchEvent(new Event('submit'));
+      }
     });
 
     //conectar ao websocket

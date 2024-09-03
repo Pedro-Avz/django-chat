@@ -1,0 +1,10 @@
+/*/_pycache_
+/*/venv
+/*/media
+
+.venv/
+/venv/
+/venv
+venv/
+venv
+.env.*
