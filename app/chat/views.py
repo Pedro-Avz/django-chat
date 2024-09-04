@@ -1,13 +1,13 @@
 #models
 from .models import Room, Message
 
-#retornos , viewsets e serializer
+#renders
 from django.shortcuts import render, redirect
-
-from django.contrib import messages
 
 #responses
 from django.http import JsonResponse
+from django.contrib import messages
+import json
 
 
 def check_room_exists(request):
@@ -54,7 +54,6 @@ def HomeView(request):
     return render(request, "home.html", {"rooms": rooms})
 
 def RoomView(request, room_name, username):
-
     have_room = Room.objects.filter(room_name__iexact=room_name).first()
 
     if not have_room:
@@ -65,12 +64,10 @@ def RoomView(request, room_name, username):
     get_messages = Message.objects.filter(room=have_room)
     rooms = Room.objects.all()
 
-
-    if not have_room and request.method == "POST":
-        new_room = Room.objects.create(room_name=room_name, status=False, host=username)
-        request.session['host'] = username  
-
     session_host = request.session.get('host')
+    if not session_host:
+        request.session['host'] = username
+        session_host = username
 
     if room_status:
         if request.method == "POST":
@@ -109,11 +106,27 @@ def RoomView(request, room_name, username):
         }
         return render(request, "room.html", context)
 
-    # Verificação de Deleção (opcional, pode ser em outra view)
-    if request.method == 'DELETE' and session_host and session_host == have_room.host:
-        # Chame a view de deleção (RoomDeleteView) para deletar a sala
-        return redirect('delete-room', room_name=room_name)  # Substitua 'delete-room' pelo nome da sua URL de deleção
 
-    # Mensagem de erro para deleção não autorizada
-    messages.error(request, "You are not authorized to delete this room")
-    return redirect("room", room_name=room_name, username=username)
+def RoomDeleteView(request):
+    #print("entrou na view....")
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            #print("data", data)
+            room_name = data.get('room')
+            host = data.get('host')
+        except (ValueError, KeyError):
+            return JsonResponse({'message': 'Invalid data', 'status': 400})
+
+        if not room_name or not host:
+            return JsonResponse({'message': 'Missing parameters', 'status': 400})
+
+        delete_room = Room.objects.filter(room_name=room_name, host=host).first()
+
+        if not delete_room:
+            return JsonResponse({'message': 'Room or host not found', 'status': 404})
+
+        delete_room.delete()
+        return JsonResponse({'message': 'Room deleted successfully'})
+
+    return JsonResponse({'message': 'Method not allowed'}, status=405)

@@ -169,6 +169,7 @@ body {
             <button id="confirm-button" class="confirm-button" style="display:none;">Confirm</button>
         </div>
     </div> 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const usernameInput = document.getElementById('username-input');
         const roomInput = document.getElementById('room-input');
@@ -180,13 +181,30 @@ body {
         const passwordInput = document.getElementById('password-input');
         const confirmButton = document.getElementById('confirm-button');
         const roomPasswordInput = document.getElementById('room-password-input');
-    
+
         enterButton.addEventListener('click', function(event) {
             if (usernameInput.value.trim() === '') {
-                alert('Please enter a username.');
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Please enter a username.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
                 event.preventDefault();
                 return;
             }
+            
+            if (yourRoomInput.value.trim() === '' && roomInput.value.trim() === '') {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Please enter a room name.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
+
             if (yourRoomInput.value.trim() !== '') {
                 roomOptions.style.display = 'flex';
                 event.preventDefault();
@@ -196,12 +214,17 @@ body {
                     if (exists) {
                         document.querySelector('form').submit();
                     } else {
-                        alert('Room does not exist.');
+                        Swal.fire({
+                            title: 'Oops...',
+                            text: 'Room does not exist.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     }
                 });
             }
         });
-    
+
         function checkRoomExists(roomName, callback) {
             fetch(`/check-room-exists/?room_name=${encodeURIComponent(roomName)}`)
                 .then(response => response.json())
@@ -212,18 +235,23 @@ body {
                     console.error('Error:', error);
                 });
         }
-    
+
         privateRoomButton.addEventListener('click', function() {
             passwordInput.style.display = 'block';
             confirmButton.style.display = 'block';
         });
-    
+
         publicRoomButton.addEventListener('click', function() {
             const roomName = yourRoomInput.value.trim();
             if (roomName !== '') {
                 checkRoomExists(roomName, function(exists) {
                     if (exists) {
-                        alert('Room already exists. Please choose a different name.');
+                        Swal.fire({
+                            title: 'Oops...',
+                            text: 'Room already exists. Please choose a different name.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     } else {
                         roomPasswordInput.value = ''; 
                         roomOptions.style.display = 'none'; 
@@ -231,21 +259,36 @@ body {
                     }
                 });
             } else {
-                alert('Please enter a room name.');
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Please enter a room name.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         });
-    
+
         confirmButton.addEventListener('click', function(event) {
             const roomName = yourRoomInput.value.trim();
             if (roomName !== '') {
                 event.preventDefault();
                 checkRoomExists(roomName, function(exists) {
                     if (exists) {
-                        alert('Room already exists. Please choose a different name.');
+                        Swal.fire({
+                            title: 'Oops...',
+                            text: 'Room already exists. Please choose a different name.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     } else {
                         const isPrivate = passwordInput.style.display === 'block';
                         if (isPrivate && !passwordInput.value.trim()) {
-                            alert('Please enter a password for the private room.');
+                            Swal.fire({
+                                title: 'Oops...',
+                                text: 'Please enter a password for the private room.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
                         } else {
                             roomOptions.style.display = 'none';
                             roomPasswordInput.value = isPrivate ? passwordInput.value : ''; 
@@ -254,10 +297,15 @@ body {
                     }
                 });
             } else {
-                alert('Please enter a room name.');
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Please enter a room name.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         });
-    
+
         document.addEventListener('click', function(event) {
             if (!roomOptions.contains(event.target) && !enterButton.contains(event.target)) {
                 roomOptions.style.display = 'none';
@@ -266,9 +314,7 @@ body {
             }
         });
     </script>
-    
-    
-    
+
 </body>
 
 </html>

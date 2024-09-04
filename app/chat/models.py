@@ -2,6 +2,7 @@ from django.db import models
 
 class Room(models.Model):
     room_name = models.CharField(max_length=55)
+    #um host para poder excluir a room
     host = models.CharField(max_length=55, null=False, default="Unknown")
     #vai ser publica ou privada
     status = models.BooleanField(default=False)

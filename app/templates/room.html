@@ -110,6 +110,20 @@ body {
   flex-direction: column;
   justify-content: space-between; 
   color: #ffffff;
+  position: relative; 
+}
+
+.delete-room-btn {
+    position: absolute; 
+    top: 10px; 
+    right: 10px; 
+    cursor: pointer;
+    background-color: transparent; 
+    color: white; 
+    border: none;
+    padding: 5px 10px;
+    font-size: 1rem; 
+    transition: background-color 0.3s ease; 
 }
 
 .content h1 {
@@ -119,6 +133,7 @@ body {
   color: #ffffff;
   position: relative;
 }
+
 
 .chats-container {
   flex-grow: 1;
@@ -304,7 +319,61 @@ button:hover {
       background-color: #ce3203;
   }
 
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 4;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(20, 23, 33, 0.8);
+    backdrop-filter: blur(8px); 
+}
+
+.modal-content {
+    background-color: rgba(30, 30, 40, 0.8); 
+    color: #fff;
+    margin: 10% auto;
+    padding: 1.5rem;
+    border: none;
+    width: 20%;
+    border-radius: 1rem;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+#confirm-delete-btn, #cancel-delete-btn {
+    padding: 0.5rem 1.5rem;
+    margin: 0.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#confirm-delete-btn {
+    background-color: #fa541c;
+    color: white;
+}
+
+#confirm-delete-btn:hover {
+    background-color: #ce3203;
+}
+
+#cancel-delete-btn {
+    background-color: grey;
+    color: white;
+}
+
+#cancel-delete-btn:hover {
+    background-color: #333;
+}
+
+
 </style>
+
 <body>
   <div class="overlay"></div>
   {% if room_status %}
@@ -320,6 +389,13 @@ button:hover {
   </div>
   {% endif %}
   <div class="page-container">
+    <div id="delete-confirm-modal" class="modal">
+      <div class="modal-content">
+        <p>Are you sure you want to delete this room?</p>
+        <button id="confirm-delete-btn">Yes, delete</button>
+        <button id="cancel-delete-btn">Cancel</button>
+      </div>
+    </div>
     <div class="sidebar">
       <h1>Rooms</h1>
       <div class="rooms-container">
@@ -343,6 +419,9 @@ button:hover {
   </div>
   
       <div class="content">
+          {% if room_host == user %}
+          <button id="delete-room-btn" class="delete-room-btn">✖</button>
+          {% endif %}
           <h1>Welcome to {{ room_name }}</h1>
           <div class="chats-container" id="chats-container">
             {% for message in messages %}
@@ -367,9 +446,10 @@ button:hover {
       </div>
   </div>
 </body>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script>
-    document.getElementById('message').addEventListener('input', function () {
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.getElementById('message').addEventListener('input', function () {
     this.style.height = 'auto';  
     this.style.height = this.scrollHeight + 'px';  
     if (this.scrollHeight > parseInt(getComputedStyle(this).maxHeight)) {
@@ -377,68 +457,128 @@ button:hover {
     } else {
         this.style.overflowY = 'hidden';  
     }
-    });
+  });
 
-    document.getElementById("message").addEventListener("keydown", function(event) {
+  document.getElementById("message").addEventListener("keydown", function(event) {
     if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         message_form.dispatchEvent(new Event('submit'));
       }
-    });
+  });
 
-    //conectar ao websocket
-    const socketURL = `ws://${window.location.host}/ws/messages/{{room_name}}/`;
-    //console.log("conectando ao websocket...")
-    const socket = new WebSocket(socketURL)
+  //conectar ao WebSocket
+  const socketURL = `ws://${window.location.host}/ws/messages/{{room_name}}/`;
+  const socket = new WebSocket(socketURL);
 
-    //enviar para o back
-    const message_form = document.getElementById("msg-form")
-    message_form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      let message_sent = document.getElementById("message").value;
-      //console.log("enviando mensangem... ", message_sent);
-      socket.send(
-        JSON.stringify({
-          message: message_sent,
-          room_name: "{{room_name}}",
-          sender: "{{user}}",
-        })
-      );
-    });
+  //enviar para o back
+  const message_form = document.getElementById("msg-form");
+  message_form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    let message_sent = document.getElementById("message").value;
+    socket.send(
+      JSON.stringify({
+        message: message_sent,
+        room_name: "{{room_name}}",
+        sender: "{{user}}",
+      })
+    );
+  });
 
-    //fazer o chat ir descendo
-    const chats_div = document.getElementById("chats-container")
-    const scrollToBottom = () => {
-      chats_div.scrollTop = chats_div.scrollHeight;
+  //fazer o chat ir descendo
+  const chats_div = document.getElementById("chats-container");
+  const scrollToBottom = () => {
+    chats_div.scrollTop = chats_div.scrollHeight;
+  };
+
+  //receber as mensagens do back
+  socket.addEventListener("message", (e) => {
+    const data = JSON.parse(e.data)["message"];
+
+    let sender = data["sender"];
+    let content = data["message"];
+
+    if (sender == "{{user}}") {
+      document.getElementById("message").value = "";
     }
 
-    //receber as messagens do back
-    socket.addEventListener("message", (e) => {
-      const data = JSON.parse(e.data)["message"]
-      //console.log(data);
+    if (sender == "{{user}}") {
+      chats_div.innerHTML += `<div class="single-message sent">
+        <div class="msg-body">${content}</div>
+        <p class="sender">Me</p>
+      </div>`;
+    } else {
+      chats_div.innerHTML += `<div class="single-message">
+        <div class="msg-body">${content}</div>
+        <p class="sender">${sender}</p>
+      </div>`;
+    }
 
-      let sender = data["sender"]
-      let content = data["message"]
+    scrollToBottom();
+  });
 
-      if (sender == "{{user}}") {
-        document.getElementById("message").value = ""
-      }
+  document.addEventListener("DOMContentLoaded", function() {
+    const deleteRoomBtn = document.getElementById("delete-room-btn");
+    const confirmModal = document.getElementById("delete-confirm-modal");
+    const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+    const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
 
-      if (sender == "{{user}}") {
-        chats_div.innerHTML += `<div class="single-message sent">
-          <div class="msg-body">${content}</div>
-          <p class="sender">Me</p>
-        </div>`;
-      } else {
-        chats_div.innerHTML += `<div class="single-message">
-          <div class="msg-body">${content}</div>
-          <p class="sender">${sender}</p>
-        </div>`;
-      }
+    if (deleteRoomBtn) {
+        deleteRoomBtn.addEventListener("click", function() {
+            confirmModal.style.display = "block";
+        });
+    }
 
-      scrollToBottom();
-
+    cancelDeleteBtn.addEventListener("click", function() {
+        confirmModal.style.display = "none";
     });
+
+    confirmDeleteBtn.addEventListener("click", function() {
+        const room = "{{ room_name }}";
+        const host = "{{ user }}";
+        console.log(room, host);
+
+        axios.post("{% url 'delete-room' %}", 
+        {
+            room: room,
+            host: host
+        }, 
+        {
+            headers: {
+                'X-CSRFToken': "{{ csrf_token }}"
+            }
+        })
+        .then(function(response) {
+            if (response.data.message === "Room deleted successfully") {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Room deleted successfully',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = "/";
+                });
+            } else {
+                Swal.fire({
+                    title: 'Oops...!',
+                    text: response.data.message,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(function(error) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'There was an error deleting the room!',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            console.error("There was an error deleting the room!", error);
+        });
+    });
+  });
+</script>
+
   </script>
 </body>
 
