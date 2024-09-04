@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    build: ./app
     command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
+    networks:
+      - internal
 
   db:
     image: postgres:15
@@ -19,6 +19,12 @@ services:
       POSTGRES_DB: myapp_db
       POSTGRES_USER: myapp_user
       POSTGRES_PASSWORD: myapp_pass
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: false
 
 volumes:
   postgres_data:

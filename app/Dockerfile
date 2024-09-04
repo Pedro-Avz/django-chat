@@ -1,16 +1,31 @@
-FROM python:3.12
+# pull official base image
+FROM python:3.9.6-alpine
 
-WORKDIR /app
+# set work directory
+WORKDIR /usr/src/app
 
-COPY requirements.txt .
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-RUN pip install --no-cache-dir -r requirements.txt
+# install psycopg2 dependencies
+RUN apk update \
+    && apk add postgresql-dev gcc python3-dev musl-dev
 
+# install dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
+
+# copy entrypoint.sh
+COPY ./entrypoint.sh .
+RUN sed -i 's/\r$//g' ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# copy project
 COPY . .
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["/entrypoint.sh"]
+# run entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
