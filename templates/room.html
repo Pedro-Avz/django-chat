@@ -117,6 +117,7 @@ body {
   font-size: 2rem;
   margin-bottom: 1rem;
   color: #ffffff;
+  position: relative;
 }
 
 .chats-container {
@@ -340,6 +341,7 @@ button:hover {
           <a href="/" > <button type="submit">Logout</button></a>
       </div>
   </div>
+  
       <div class="content">
           <h1>Welcome to {{ room_name }}</h1>
           <div class="chats-container" id="chats-container">
@@ -365,7 +367,7 @@ button:hover {
       </div>
   </div>
 </body>
-      
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
     document.getElementById('message').addEventListener('input', function () {
     this.style.height = 'auto';  
@@ -437,7 +439,6 @@ button:hover {
       scrollToBottom();
 
     });
-
   </script>
 </body>
 
