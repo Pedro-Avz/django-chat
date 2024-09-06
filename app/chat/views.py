@@ -8,7 +8,9 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib import messages
 import json
-
+#channels websocket
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 def check_room_exists(request):
     room_name = request.GET.get('room_name', '').strip()
@@ -125,6 +127,15 @@ def RoomDeleteView(request):
 
         if not delete_room:
             return JsonResponse({'message': 'Room or host not found', 'status': 404})
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"room_{room_name}",
+            {
+                "type": "room_deleted",
+                "message": "Room has been deleted by the host."
+            }
+        )
 
         delete_room.delete()
         return JsonResponse({'message': 'Room deleted successfully'})

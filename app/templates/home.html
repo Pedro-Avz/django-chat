@@ -182,6 +182,12 @@ body {
         const confirmButton = document.getElementById('confirm-button');
         const roomPasswordInput = document.getElementById('room-password-input');
 
+
+        //a sala não pode ter espaço 
+        function hasSpaces(str) {
+            return /\s/.test(str);
+        }
+
         enterButton.addEventListener('click', function(event) {
             if (usernameInput.value.trim() === '') {
                 Swal.fire({
@@ -193,7 +199,7 @@ body {
                 event.preventDefault();
                 return;
             }
-            
+
             if (yourRoomInput.value.trim() === '' && roomInput.value.trim() === '') {
                 Swal.fire({
                     title: 'Oops...',
@@ -205,10 +211,31 @@ body {
                 return;
             }
 
+            if (hasSpaces(yourRoomInput.value.trim())) {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Room name cannot contain spaces.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
+
             if (yourRoomInput.value.trim() !== '') {
                 roomOptions.style.display = 'flex';
                 event.preventDefault();
             } else if (roomInput.value.trim() !== '') {
+                if (hasSpaces(roomInput.value.trim())) {
+                    Swal.fire({
+                        title: 'Oops...',
+                        text: 'Room name cannot contain spaces.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    event.preventDefault();
+                    return;
+                }
                 event.preventDefault();
                 checkRoomExists(roomInput.value.trim(), function(exists) {
                     if (exists) {
@@ -224,7 +251,6 @@ body {
                 });
             }
         });
-
         function checkRoomExists(roomName, callback) {
             fetch(`/check-room-exists/?room_name=${encodeURIComponent(roomName)}`)
                 .then(response => response.json())

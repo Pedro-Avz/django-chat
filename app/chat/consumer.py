@@ -57,3 +57,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message = data['message']
             )
 
+    async def room_deleted(self, event):
+        #enviar pro front q a sala foi deletada
+        await self.send(text_data=json.dumps({
+            "action": "room_deleted",
+            "message": event["message"]
+        }))
+
