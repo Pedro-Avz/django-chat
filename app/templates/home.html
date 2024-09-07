@@ -181,15 +181,37 @@ body {
         const passwordInput = document.getElementById('password-input');
         const confirmButton = document.getElementById('confirm-button');
         const roomPasswordInput = document.getElementById('room-password-input');
-
-
-        //a sala não pode ter espaço 
+    
+        //ver se ja tem user com o mesmo nick
+        function checkUsernameInRoom(username, roomName, callback) {
+            fetch(`/check-username-in-room/?username=${encodeURIComponent(username)}&room_name=${encodeURIComponent(roomName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    callback(data.usernameExists);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    
+        // sala e user n pode ter espaço
         function hasSpaces(str) {
             return /\s/.test(str);
         }
-
+    
+        // sala e user n pode ter alguns caracteres 
+        function hasInvalidChars(str) {
+            //só hifen letra normal, numero e _
+            const invalidCharPattern = /[^a-zA-Z0-9-_]/;
+            return invalidCharPattern.test(str);
+        }
+    
         enterButton.addEventListener('click', function(event) {
-            if (usernameInput.value.trim() === '') {
+            const username = usernameInput.value.trim();
+            const room = roomInput.value.trim();
+            const yourRoom = yourRoomInput.value.trim();
+    
+            if (username === '') {
                 Swal.fire({
                     title: 'Oops...',
                     text: 'Please enter a username.',
@@ -199,8 +221,28 @@ body {
                 event.preventDefault();
                 return;
             }
-
-            if (yourRoomInput.value.trim() === '' && roomInput.value.trim() === '') {
+            if (hasSpaces(username)) {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Username cannot contain spaces.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
+            if (hasInvalidChars(username)) {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Username contains invalid characters. Please use only letters, numbers, hyphens, or underscores.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
+    
+            if (yourRoom === '' && room === '') {
                 Swal.fire({
                     title: 'Oops...',
                     text: 'Please enter a room name.',
@@ -210,8 +252,8 @@ body {
                 event.preventDefault();
                 return;
             }
-
-            if (hasSpaces(yourRoomInput.value.trim())) {
+    
+            if (hasSpaces(yourRoom)) {
                 Swal.fire({
                     title: 'Oops...',
                     text: 'Room name cannot contain spaces.',
@@ -221,12 +263,23 @@ body {
                 event.preventDefault();
                 return;
             }
-
-            if (yourRoomInput.value.trim() !== '') {
+    
+            if (hasInvalidChars(yourRoom) || hasInvalidChars(room)) {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: 'Room name contains invalid characters. Please use only letters, numbers, hyphens, or underscores.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
+    
+            if (yourRoom !== '') {
                 roomOptions.style.display = 'flex';
                 event.preventDefault();
-            } else if (roomInput.value.trim() !== '') {
-                if (hasSpaces(roomInput.value.trim())) {
+            } else if (room !== '') {
+                if (hasSpaces(room)) {
                     Swal.fire({
                         title: 'Oops...',
                         text: 'Room name cannot contain spaces.',
@@ -237,9 +290,20 @@ body {
                     return;
                 }
                 event.preventDefault();
-                checkRoomExists(roomInput.value.trim(), function(exists) {
+                checkRoomExists(room, function(exists) {
                     if (exists) {
-                        document.querySelector('form').submit();
+                        checkUsernameInRoom(username, room, function(usernameExists) {
+                            if (usernameExists) {
+                                Swal.fire({
+                                    title: 'Oops...',
+                                    text: 'Username already taken in this room.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            } else {
+                                document.querySelector('form').submit();
+                            }
+                        });
                     } else {
                         Swal.fire({
                             title: 'Oops...',
@@ -251,6 +315,7 @@ body {
                 });
             }
         });
+    
         function checkRoomExists(roomName, callback) {
             fetch(`/check-room-exists/?room_name=${encodeURIComponent(roomName)}`)
                 .then(response => response.json())
@@ -261,12 +326,12 @@ body {
                     console.error('Error:', error);
                 });
         }
-
+    
         privateRoomButton.addEventListener('click', function() {
             passwordInput.style.display = 'block';
             confirmButton.style.display = 'block';
         });
-
+    
         publicRoomButton.addEventListener('click', function() {
             const roomName = yourRoomInput.value.trim();
             if (roomName !== '') {
@@ -293,7 +358,7 @@ body {
                 });
             }
         });
-
+    
         confirmButton.addEventListener('click', function(event) {
             const roomName = yourRoomInput.value.trim();
             if (roomName !== '') {
@@ -331,7 +396,7 @@ body {
                 });
             }
         });
-
+    
         document.addEventListener('click', function(event) {
             if (!roomOptions.contains(event.target) && !enterButton.contains(event.target)) {
                 roomOptions.style.display = 'none';
@@ -340,7 +405,7 @@ body {
             }
         });
     </script>
-
+    
 </body>
 
 </html>

@@ -13,6 +13,8 @@ class Room(models.Model):
     #vai ser publica ou privada
     status = models.BooleanField(default=False)
     password = models.CharField(max_length=55, null=True, blank=True)
+    #membros dentro da sala
+    active_users = models.JSONField(default=list, blank=True) 
 
     def __str__(self):
         return self.room_name

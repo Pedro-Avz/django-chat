@@ -17,6 +17,17 @@ def check_room_exists(request):
     exists = Room.objects.filter(room_name__iexact=room_name).exists()
     return JsonResponse({'exists': exists})
 
+def check_username_in_room(request):
+    username = request.GET.get('username', '').strip().lower()
+    room_name = request.GET.get('room_name', '').strip()
+
+    try:
+        room = Room.objects.get(room_name__iexact=room_name)
+        username_exists = username in [user.lower() for user in room.active_users]
+        return JsonResponse({'usernameExists': username_exists})
+    except Room.DoesNotExist:
+        return JsonResponse({'usernameExists': False})
+
 def HomeView(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
@@ -61,6 +72,11 @@ def RoomView(request, room_name, username):
     if not have_room:
         messages.error(request, "Room does not exist.")
         return redirect('/')
+
+    active_users_lower = [user.lower() for user in have_room.active_users]
+    have_room.active_users.append(username)
+    have_room.save()
+
 
     room_status = have_room.status
     get_messages = Message.objects.filter(room=have_room)
@@ -107,7 +123,6 @@ def RoomView(request, room_name, username):
             "room_host": have_room.host,
         }
         return render(request, "room.html", context)
-
 
 def RoomDeleteView(request):
     #print("entrou na view....")

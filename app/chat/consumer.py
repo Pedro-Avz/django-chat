@@ -7,17 +7,39 @@ from .models import Room, Message
 # alguns metodos são especificos, e destinados nao posso mudar
 class ChatConsumer(AsyncWebsocketConsumer):
 
+
     async def connect(self):
 
-        self.room_name = f"room_{self.scope['url_route']['kwargs']['room_name']}"
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.username = self.scope['url_route']['kwargs']['username']
+        
         await self.channel_layer.group_add(self.room_name, self.channel_name)
+        group_name = f"room_{self.room_name}"
+        await self.channel_layer.group_add(group_name, self.channel_name)
+        room = await database_sync_to_async(Room.objects.get)(room_name=self.room_name)
+        if self.username.lower() not in [user.lower() for user in room.active_users]:
+            room.active_users.append(self.username)
+            await database_sync_to_async(room.save)()
 
+        
         await self.accept()
+
 
     async def disconnect(self, code):
 
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
-        self.close(code)
+        room_name = self.scope['url_route']['kwargs']['room_name']
+        username = self.scope['url_route']['kwargs']['username']
+        
+        print(f"userername {username} saiu da sala {room_name}")
+
+        room = await database_sync_to_async(Room.objects.get)(room_name=room_name)
+        room.active_users = [user for user in room.active_users if user.lower() != username.lower()]
+        
+        print(f"estao na sala: {room.active_users}")
+        await database_sync_to_async(room.save)()
+
+        await self.channel_layer.group_discard(f"room_{room_name}", self.channel_name)
+        await self.close(code)
 
     async def receive(self, text_data):
 
@@ -63,4 +85,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "action": "room_deleted",
             "message": event["message"]
         }))
-

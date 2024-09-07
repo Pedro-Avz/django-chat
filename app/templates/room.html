@@ -406,6 +406,9 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
     cursor: pointer;
     margin: 0.2rem;
   }
+  .swal2-container {
+    z-index: 9999999 !important; 
+}
 
 </style>
 
@@ -501,24 +504,28 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.getElementById('emoji-btn').addEventListener('click', function(event) {
-      event.stopPropagation(); 
-      var picker = document.getElementById('emoji-picker');
-      picker.style.display = picker.style.display === 'none' || picker.style.display === '' ? 'block' : 'none';
-    });
-    function insertEmoji(emoji) {
-        var textarea = document.getElementById('message');
-        textarea.value += emoji;
-        document.getElementById('emoji-picker').style.display = 'none';
-    }
+  //conectar ao webSocket
+  const socketURL = `ws://${window.location.host}/ws/messages/{{room_name}}/{{user}}/`;
+  const socket = new WebSocket(socketURL);
 
-    document.addEventListener('click', function(event) {
-      var picker = document.getElementById('emoji-picker');
-      var emojiBtn = document.getElementById('emoji-btn');
-      if (!picker.contains(event.target) && !emojiBtn.contains(event.target)) {
-        picker.style.display = 'none';
-      }
-    });
+  document.getElementById('emoji-btn').addEventListener('click', function(event) {
+    event.stopPropagation(); 
+    var picker = document.getElementById('emoji-picker');
+    picker.style.display = picker.style.display === 'none' || picker.style.display === '' ? 'block' : 'none';
+  });
+  function insertEmoji(emoji) {
+      var textarea = document.getElementById('message');
+      textarea.value += emoji;
+      document.getElementById('emoji-picker').style.display = 'none';
+  }
+
+  document.addEventListener('click', function(event) {
+    var picker = document.getElementById('emoji-picker');
+    var emojiBtn = document.getElementById('emoji-btn');
+    if (!picker.contains(event.target) && !emojiBtn.contains(event.target)) {
+      picker.style.display = 'none';
+    }
+  });
 
   document.getElementById('message').addEventListener('input', function () {
     this.style.height = 'auto';  
@@ -536,10 +543,6 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
         message_form.dispatchEvent(new Event('submit'));
       }
   });
-
-  //conectar ao webSocket
-  const socketURL = `ws://${window.location.host}/ws/messages/{{room_name}}/`;
-  const socket = new WebSocket(socketURL);
 
   //enviar para o back
   const message_form = document.getElementById("msg-form");
@@ -577,37 +580,37 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
         return; 
     }
 
-    const messageData = data["message"];
+  const messageData = data["message"];
 
-    let sender = messageData["sender"];
-    let content = messageData["message"];
+  let sender = messageData["sender"];
+  let content = messageData["message"];
 
-    if (sender == "{{user}}") {
-      document.getElementById("message").value = "";
-    }
-    
-    //create_at da mensagem é now , então funciona pegar o horario de agora quando enviar a mensagem websocket tbm 
-    const hours = new Date().getHours();
-    const minutes = new Date().getMinutes().toString().padStart(2, '0');
+  if (sender == "{{user}}") {
+    document.getElementById("message").value = "";
+  }
+  
+  //create_at da mensagem é now , então funciona pegar o horario de agora quando enviar a mensagem websocket tbm 
+  const hours = new Date().getHours();
+  const minutes = new Date().getMinutes().toString().padStart(2, '0');
 
-    if (sender == "{{user}}") {
-      chats_div.innerHTML += `<div class="single-message sent">
-        <div class="msg-body">${content}
-          <span class="time">${hours}:${minutes}</span>
-        </div>
-        <p class="sender">Me</p>
-      </div>`;
-    } else {
-      chats_div.innerHTML += `<div class="single-message">
-        <div class="msg-body">${content}
-          <span class="time">${hours}:${minutes}</span>
-        </div>
-        <p class="sender">${sender}</p>
-      </div>`;
-    }
+  if (sender == "{{user}}") {
+    chats_div.innerHTML += `<div class="single-message sent">
+      <div class="msg-body">${content}
+        <span class="time">${hours}:${minutes}</span>
+      </div>
+      <p class="sender">Me</p>
+    </div>`;
+  } else {
+    chats_div.innerHTML += `<div class="single-message">
+      <div class="msg-body">${content}
+        <span class="time">${hours}:${minutes}</span>
+      </div>
+      <p class="sender">${sender}</p>
+    </div>`;
+  }
 
-    scrollToBottom();
-});
+  scrollToBottom();
+  });
 
 
   document.addEventListener("DOMContentLoaded", function() {
@@ -627,53 +630,57 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
     });
 
     confirmDeleteBtn.addEventListener("click", function() {
-        const room = "{{ room_name }}";
-        const host = "{{ user }}";
-        console.log(room, host);
+    const room = "{{ room_name }}";
+    const host = "{{ user }}";
+    console.log(room, host);
 
-        axios.post("{% url 'delete-room' %}", 
-        {
-            room: room,
-            host: host
-        }, 
-        {
-            headers: {
-                'X-CSRFToken': "{{ csrf_token }}"
-            }
-        })
-        .then(function(response) {
-            if (response.data.message === "Room deleted successfully") {
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Room deleted successfully',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = "/";
-                });
-            } else {
-                Swal.fire({
-                    title: 'Oops...!',
-                    text: response.data.message,
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            }
-        })
-        .catch(function(error) {
+    axios.post("{% url 'delete-room' %}", 
+    {
+        room: room,
+        host: host
+    }, 
+    {
+        headers: {
+            'X-CSRFToken': "{{ csrf_token }}"
+        }
+    })
+    .then(function(response) {
+        if (response.data.message === "Room deleted successfully") {
             Swal.fire({
-                title: 'Error!',
-                text: 'There was an error deleting the room!',
+                title: 'Success!',
+                text: 'Room deleted successfully',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 2000); 
+            });
+        } else {
+            Swal.fire({
+                title: 'Oops...!',
+                text: response.data.message,
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
-            console.error("There was an error deleting the room!", error);
+        }
+    })
+    .catch(function(error) {
+        Swal.fire({
+            title: 'Error!',
+            text: 'There was an error deleting the room!',
+            icon: 'error',
+            confirmButtonText: 'OK'
         });
+        console.error("There was an error deleting the room!", error);
     });
+});
+
   });
 </script>
 
-  </script>
+
 </body>
 
 </html>
