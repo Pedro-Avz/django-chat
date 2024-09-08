@@ -579,7 +579,20 @@ text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
         });
         return; 
     }
+    if (data.action === "room_create") {
+        console.log("SALA CRIADA:", data.room_name); 
 
+        const roomName = data.room_name;
+        const user = "{{ user }}"
+        const roomsContainer = document.querySelector(".rooms-container");
+        roomsContainer.innerHTML += `
+          <a href="/room/${roomName}/${user}">
+            <div class="room">
+              ${roomName}
+            </div>
+          </a>`;
+        return;
+    }
   const messageData = data["message"];
 
   let sender = messageData["sender"];

@@ -16,6 +16,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_name, self.channel_name)
         group_name = f"room_{self.room_name}"
         await self.channel_layer.group_add(group_name, self.channel_name)
+        await self.channel_layer.group_add("rooms_group", self.channel_name)
         room = await database_sync_to_async(Room.objects.get)(room_name=self.room_name)
         if self.username.lower() not in [user.lower() for user in room.active_users]:
             room.active_users.append(self.username)
@@ -84,4 +85,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "action": "room_deleted",
             "message": event["message"]
+        }))
+
+    async def room_create(self, event):
+        #enviar pro front q a sala foi criada
+        await self.send(text_data=json.dumps({
+            "action": "room_create",
+            "room_name": event["room_name"]
         }))

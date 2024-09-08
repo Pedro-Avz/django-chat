@@ -43,6 +43,10 @@ def HomeView(request):
             room = your_room
             is_private = bool(room_password)
 
+            if room.lower() == "admin":
+                messages.error(request, "You cannot use 'admin' as a room name.")
+                return JsonResponse({"message" : "You cannot use 'admin' as a room name." , "status" : 400})
+
             existing_room = Room.objects.filter(room_name__iexact=room).first()
             if existing_room:
                 messages.error(request, "Room already exists.")
@@ -53,6 +57,14 @@ def HomeView(request):
                 new_room.password = room_password
             new_room.save()
 
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"rooms_group",
+                {
+                    "type": "room_create",
+                    "room_name": new_room.room_name
+                }
+            )
             return redirect("room", room_name=room, username=username)
 
         else:
@@ -102,7 +114,7 @@ def RoomView(request, room_name, username):
                 return render(request, "room.html", context)
             else:
                 messages.error(request, "Incorrect password.")
-                return redirect("room", room_name=room_name, username=username)
+                return redirect("/")
         else:
             context = {
                 "messages": [],

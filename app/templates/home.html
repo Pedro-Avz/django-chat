@@ -252,7 +252,16 @@ body {
                 event.preventDefault();
                 return;
             }
-    
+            if (yourRoom.toLowerCase() === "admin") {
+                Swal.fire({
+                    title: 'Oops...',
+                    text: "You cannot use 'admin' as a room name..",
+                    icon: "info",
+                    confirmButtonText: 'OK'
+                });
+                event.preventDefault();
+                return;
+            }
             if (hasSpaces(yourRoom)) {
                 Swal.fire({
                     title: 'Oops...',
