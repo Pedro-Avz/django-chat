@@ -8,6 +8,9 @@ class RoomAccessMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if request.path.startswith('/admin'):
+            return self.get_response(request)
+        
         pattern = r'^/(?P<room_name>[a-zA-Z0-9-_]+)/(?P<username>[a-zA-Z0-9-_]+)/$'
         path = request.path_info
         match = re.match(pattern, path)
@@ -30,4 +33,5 @@ class RoomAccessMiddleware:
                 else:
                     messages.error(request, "Room does not exist.")
                     return redirect('/')
+        
         return self.get_response(request)
