@@ -10,7 +10,10 @@ class RoomAccessMiddleware:
     def __call__(self, request):
         if request.path.startswith('/admin'):
             return self.get_response(request)
-        
+            """
+                middleware para verificar o acesso a salas, validando a existência da sala e 
+                impedindo nomes de usuário duplicados dentro de cada sala.
+            """
         pattern = r'^/(?P<room_name>[a-zA-Z0-9-_]+)/(?P<username>[a-zA-Z0-9-_]+)/$'
         path = request.path_info
         match = re.match(pattern, path)
